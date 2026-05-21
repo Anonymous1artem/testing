@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeQuiz — Bilimlarni tekshirish</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{-webkit-user-select:none;-moz-user-select:none;user-select:none}
+    @media print{body *{display:none!important}body::after{content:'Chop etish taqiqlandi';display:block;font-size:2rem;text-align:center;margin-top:40vh;color:#000}}
+    :root{
+      --bg:#0a0a0f;--sf:#12121a;--cd:#1a1a26;--br:#2a2a3d;
+      --ac:#7c6cf7;--a2:#4ec9b0;--a3:#f5a623;--a4:#e74c3c;--a5:#2ecc71;
+      --tx:#e8e8f0;--mu:#7070a0;--rd:12px;
+    }
+    body{background:var(--bg);color:var(--tx);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,108,247,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,108,247,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+    /* Guard overlay */
+    #ov{display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,10,15,.97);flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;backdrop-filter:blur(8px)}
+    #ov.on{display:flex;animation:fdi .15s ease}
+    @keyframes fdi{from{opacity:0}to{opacity:1}}
+    .gi{font-size:3.2rem}
+    .gm{font-family:'Unbounded',sans-serif;font-size:1rem;color:var(--a4);text-align:center;max-width:340px;line-height:1.65}
+    .gs{color:var(--mu);font-size:.72rem;text-align:center;max-width:320px;line-height:1.55}
+    .gw{background:rgba(231,76,60,.09);border:1px solid rgba(231,76,60,.32);border-radius:8px;padding:.5rem 1.2rem;color:var(--a4);font-size:.69rem;text-align:center}
+
+    /* Swap toast */
+    #toast{display:none;position:fixed;top:1.1rem;right:1.1rem;z-index:99998;
+      background:rgba(231,76,60,.13);border:1px solid rgba(231,76,60,.38);
+      border-radius:9px;padding:.65rem 1.1rem;font-size:.7rem;color:var(--a4);
+      max-width:270px;line-height:1.5;pointer-events:none}
+    #toast.on{display:block;animation:tsi .3s ease}
+    @keyframes tsi{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+
+    #app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:2rem 1rem}
+
+    /* Home */
+    .hdr{text-align:center;padding:3.5rem 0 2rem}
+    .logo{font-family:'Unbounded',sans-serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;letter-spacing:-2px;
+      background:linear-gradient(135deg,#7c6cf7,#4ec9b0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sub{color:var(--mu);font-size:.76rem;margin-top:.5rem;letter-spacing:2px}
+    .bdgs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.9rem}
+    .bdg{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:5px;font-size:.62rem}
+    .bgt{background:rgba(78,201,176,.1);border:1px solid rgba(78,201,176,.28);color:var(--a2)}
+    .bgr{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.28);color:var(--a4)}
+    .bgp{background:rgba(124,108,247,.1);border:1px solid rgba(124,108,247,.28);color:var(--ac)}
+    .bgo{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.28);color:var(--a3)}
+
+    .scard{background:var(--cd);border:1px solid var(--br);border-radius:var(--rd);padding:2.5rem 2rem;text-align:center;margin-top:1.4rem}
+    .sc-ttl{font-family:'Unbounded',sans-serif;font-size:1.05rem;margin-bottom:.7rem}
+    .sc-sub{color:var(--mu);font-size:.78rem;line-height:1.85;margin-bottom:1.8rem;max-width:500px;margin-left:auto;margin-right:auto}
+
+    .stats-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+    .sbox{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:.9rem 1.5rem;text-align:center;min-width:95px}
+    .sb-n{font-family:'Unbounded',sans-serif;font-size:1.4rem;font-weight:900}
+    .sb-l{color:var(--mu);font-size:.62rem;margin-top:.25rem}
+
+    .ttags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:2rem}
+    .tt{padding:.28rem .72rem;border-radius:5px;font-size:.68rem;font-weight:500;border:1px solid;background:transparent}
+
+    .btn{padding:.65rem 1.3rem;border-radius:8px;border:none;font-family:inherit;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s}
+    .btn-p{background:var(--ac);color:#fff}
+    .btn-p:hover{background:#9580ff;transform:translateY(-1px)}
+    .btn-s{background:var(--cd);border:1px solid var(--br);color:var(--mu)}
+    .btn-s:hover{border-color:var(--ac);color:var(--ac)}
+    .btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+
+    /* ═══ COUNTDOWN TIMER ═══ */
+    .qscr{display:none}
+    .qhd{display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .qlbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:.88rem;flex:1}
+    .swbadge{display:none;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:5px;font-size:.62rem;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.28);color:var(--a4)}
+    .swbadge.on{display:inline-flex}
+
+    /* Big countdown timer */
+    .timer-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+    .tmr{font-family:'Unbounded',sans-serif;font-size:1.1rem;padding:.38rem .9rem;border-radius:8px;
+      background:var(--cd);border:2px solid var(--br);color:var(--tx);
+      letter-spacing:2px;transition:all .4s;min-width:110px;text-align:center}
+    .tmr.warn{border-color:var(--a3);color:var(--a3);background:rgba(245,166,35,.08);animation:pulse-warn 1s ease-in-out infinite}
+    .tmr.danger{border-color:var(--a4);color:var(--a4);background:rgba(231,76,60,.12);animation:pulse-danger .6s ease-in-out infinite}
+    .tmr-lbl{font-size:.55rem;color:var(--mu);letter-spacing:2px;text-transform:uppercase}
+    @keyframes pulse-warn{0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,.3)}50%{box-shadow:0 0 0 6px rgba(245,166,35,.0)}}
+    @keyframes pulse-danger{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.5)}50%{box-shadow:0 0 0 8px rgba(231,76,60,.0)}}
+
+    /* Timer bar across top */
+    #timer-bar-wrap{position:fixed;top:0;left:0;right:0;height:4px;z-index:500;background:rgba(42,42,61,.6)}
+    #timer-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--ac),var(--a2));transition:width .9s linear;transform-origin:left}
+    #timer-bar-fill.warn{background:linear-gradient(90deg,var(--a3),#ffcc44)}
+    #timer-bar-fill.danger{background:var(--a4)}
+
+    .pbar{width:100%;height:5px;background:var(--br);border-radius:3px}
+    .pfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ac),var(--a2));transition:width .45s ease}
+    .qctr{color:var(--mu);font-size:.67rem;margin:.5rem 0 1.2rem;text-align:right}
+
+    /* Question card */
+    .qcard{background:var(--cd);border:1px solid var(--br);border-radius:var(--rd);padding:1.65rem;margin-bottom:1.1rem;animation:su .3s ease}
+    .qcard.changed{animation:qch .55s ease}
+    @keyframes su{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes qch{0%{border-color:var(--a4);box-shadow:0 0 0 3px rgba(231,76,60,.18)}100%{border-color:var(--br);box-shadow:none}}
+    .tpill{display:inline-flex;align-items:center;gap:.3rem;padding:.17rem .55rem;border-radius:4px;font-size:.6rem;font-weight:600;margin-bottom:.6rem;border:1px solid}
+    .qnum{color:var(--mu);font-size:.66rem;margin-bottom:.6rem;letter-spacing:1px}
+    .qtxt{font-size:.9rem;line-height:1.8;margin-bottom:1.3rem}
+    .qtxt code{background:rgba(124,108,247,.15);color:#a9a0ff;padding:.13em .38em;border-radius:4px;font-size:.88em}
+
+    /* ═══ TEXT INPUT ANSWER ═══ */
+    .answer-block{margin-top:.6rem}
+    .answer-label{font-size:.65rem;letter-spacing:2px;color:var(--mu);text-transform:uppercase;margin-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
+    .answer-label span{color:var(--a3)}
+
+    .ans-input{
+      width:100%;
+      background:rgba(10,10,20,.7);
+      border:1.5px solid var(--br);
+      border-radius:8px;
+      padding:.85rem 1rem;
+      color:var(--tx);
+      font-family:'JetBrains Mono',monospace;
+      font-size:.85rem;
+      outline:none;
+      transition:border-color .2s,box-shadow .2s;
+      resize:none;
+      line-height:1.6;
+      -webkit-user-select:text;
+      -moz-user-select:text;
+      user-select:text;
+    }
+    .ans-input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(124,108,247,.15)}
+    .ans-input:disabled{opacity:.55;cursor:not-allowed}
+    .ans-input.correct{border-color:var(--a5)!important;background:rgba(46,204,113,.06)!important;box-shadow:0 0 0 2px rgba(46,204,113,.15)}
+    .ans-input.wrong{border-color:var(--a4)!important;background:rgba(231,76,60,.06)!important;box-shadow:0 0 0 2px rgba(231,76,60,.15)}
+    .ans-input.partial{border-color:var(--a3)!important;background:rgba(245,166,35,.06)!important;box-shadow:0 0 0 2px rgba(245,166,35,.15)}
+
+    .check-row{display:flex;align-items:center;gap:.75rem;margin-top:.75rem;flex-wrap:wrap}
+    .char-counter{margin-left:auto;font-size:.62rem;color:var(--mu)}
+
+    /* Feedback pill after check */
+    .verdict{display:none;align-items:center;gap:.5rem;padding:.5rem .9rem;border-radius:6px;font-size:.74rem;margin-top:.7rem}
+    .verdict.on{display:flex;animation:su .25s ease}
+    .verdict.ok{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:var(--a5)}
+    .verdict.no{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:var(--a4)}
+    .verdict.pt{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);color:var(--a3)}
+
+    .correct-ans{display:none;margin-top:.6rem;padding:.65rem .9rem;background:rgba(78,201,176,.06);border:1px solid rgba(78,201,176,.2);border-radius:7px;font-size:.76rem;color:var(--a2);line-height:1.6}
+    .correct-ans.on{display:block;animation:su .25s ease}
+
+    .exp{margin-top:.65rem;padding:.75rem 1rem;background:rgba(78,201,176,.05);border:1px solid rgba(78,201,176,.2);border-radius:7px;color:var(--a2);font-size:.74rem;line-height:1.65;display:none}
+    .exp.on{display:block;animation:su .25s ease}
+
+    /* Navigation */
+    .nav{display:flex;justify-content:space-between;gap:1rem;margin-top:.9rem;align-items:center}
+
+    /* Mini progress dots */
+    .dot-row{display:flex;gap:3px;flex-wrap:wrap;margin:.6rem 0 1rem}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--br);cursor:pointer;transition:all .2s;flex-shrink:0}
+    .dot.ans{background:var(--ac);opacity:.7}
+    .dot.ok{background:var(--a5)}
+    .dot.no{background:var(--a4)}
+    .dot.cur{transform:scale(1.45);box-shadow:0 0 0 2px var(--ac)}
+
+    /* ═══ TIME'S UP MODAL ═══ */
+    #timeup-modal{display:none;position:fixed;inset:0;z-index:99990;background:rgba(10,10,15,.96);
+      flex-direction:column;align-items:center;justify-content:center;gap:1rem;backdrop-filter:blur(10px)}
+    #timeup-modal.on{display:flex;animation:fdi .3s ease}
+    .tu-icon{font-size:4rem;animation:bounce .8s ease-in-out infinite alternate}
+    @keyframes bounce{from{transform:scale(1)}to{transform:scale(1.15)}}
+    .tu-ttl{font-family:'Unbounded',sans-serif;font-size:1.4rem;color:var(--a4);text-align:center}
+    .tu-sub{font-size:.8rem;color:var(--mu);text-align:center;max-width:320px;line-height:1.6}
+
+    /* Results */
+    .res{text-align:center;padding:3rem 1rem;display:none}
+    .scc{width:150px;height:150px;border-radius:50%;margin:0 auto 1.5rem;
+      background:conic-gradient(var(--ac) calc(var(--p,0)*3.6deg),var(--br) 0);
+      display:flex;align-items:center;justify-content:center}
+    .sci{width:118px;height:118px;border-radius:50%;background:var(--cd);display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .sp{font-family:'Unbounded',sans-serif;font-size:1.65rem;font-weight:900}
+    .sl{color:var(--mu);font-size:.6rem;margin-top:.2rem}
+    .rm{font-family:'Unbounded',sans-serif;font-size:1.15rem;margin-bottom:.55rem}
+    .rsub{color:var(--mu);font-size:.77rem;margin-bottom:1.8rem}
+    .rst{display:flex;justify-content:center;gap:2rem;margin-bottom:1.8rem;flex-wrap:wrap}
+    .stn{font-family:'Unbounded',sans-serif;font-size:1.3rem;font-weight:700}
+    .std{color:var(--mu);font-size:.66rem;margin-top:.25rem}
+    .swwarn{font-size:.68rem;color:var(--a4);margin-top:1rem;padding:.55rem 1rem;
+      background:rgba(231,76,60,.07);border:1px solid rgba(231,76,60,.22);border-radius:6px;display:none}
+    .timewarn{font-size:.68rem;color:var(--a3);margin-top:.6rem;padding:.55rem 1rem;
+      background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.22);border-radius:6px;display:none}
+
+    /* Review list in results */
+    .review-toggle{margin-top:1.2rem;cursor:pointer;font-size:.72rem;color:var(--mu);display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid var(--br);border-radius:6px;transition:all .2s}
+    .review-toggle:hover{border-color:var(--ac);color:var(--ac)}
+    .review-list{display:none;margin-top:1rem;text-align:left}
+    .review-list.on{display:block}
+    .rev-item{padding:.9rem 1rem;border-radius:8px;border:1px solid var(--br);background:var(--cd);margin-bottom:.6rem;font-size:.75rem;line-height:1.7}
+    .rev-item.ok{border-left:3px solid var(--a5)}
+    .rev-item.no{border-left:3px solid var(--a4)}
+    .rev-item.sk{border-left:3px solid var(--mu)}
+    .rev-q{color:var(--tx);margin-bottom:.35rem;font-size:.78rem}
+    .rev-user{color:var(--a3)}
+    .rev-correct{color:var(--a5)}
+    .rev-skip{color:var(--mu);font-style:italic}
+
+    input[type=text]:focus,textarea:focus{border-color:var(--ac)!important;outline:none;box-shadow:0 0 0 2px rgba(124,108,247,.15)}
+  </style>
+</head>
+<body>
+
+<!-- Timer bar at top -->
+<div id="timer-bar-wrap" style="display:none">
+  <div id="timer-bar-fill"></div>
+</div>
+
+<!-- Guard overlay -->
+<div id="ov">
+  <div class="gi">🔒</div>
+  <div class="gm" id="gm">Kirish bloklandi</div>
+  <div class="gs" id="gs">Test oynasiga qayting</div>
+  <div class="gw">⚠ Qaytganda savol almashtiriladi</div>
+</div>
+
+<!-- Time's up modal -->
+<div id="timeup-modal">
+  <div class="tu-icon">⏰</div>
+  <div class="tu-ttl">Vaqt tugadi!</div>
+  <div class="tu-sub">30 daqiqa o'tdi. Test avtomatik ravishda yakunlanmoqda...</div>
+  <button class="btn btn-p" style="margin-top:.5rem" onclick="forceFinish()">📊 Natijalarni ko'rish</button>
+</div>
+
+<!-- Swap toast -->
+<div id="toast">🔄 Savol almashtirildi — o'tish qayd etildi</div>
+
+<div id="app">
+
+  <!-- ══ HOME ══ -->
+  <div id="home">
+    <div class="hdr">
+      <div class="logo">CodeQuiz</div>
+      <div class="sub">// TO'LIQ TEST · 30 SAVOL · 7 MAVZU · ⏱ 30 DAQIQA</div>
+      <div class="bdgs">
+        <span class="bdg bgt">✓ SHA-256 shifrlash</span>
+        <span class="bdg bgr">🔄 Ketganda savol almashtiriladi</span>
+        <span class="bdg bgp">🔒 Anti-screenshot</span>
+        <span class="bdg bgo">⏱ 30 daqiqa limit</span>
+      </div>
+    </div>
+
+    <div class="scard">
+      <div class="sc-ttl">Barcha mavzular bir testda</div>
+      <div class="sc-sub">
+        7 mavzudan 30 ta savol tasodifiy tartibda.<br>
+        Har bir savol uchun <strong style="color:var(--a2)">o'z javobingizni yozasiz</strong> — variant yo'q.<br>
+        Vaqt: <strong style="color:var(--a3)">30 daqiqa</strong>. Vkladka ochsangiz — savol almashtiriladi.
+      </div>
+
+      <div class="stats-row">
+        <div class="sbox"><div class="sb-n" style="color:var(--ac)">30</div><div class="sb-l">Savol</div></div>
+        <div class="sbox"><div class="sb-n" style="color:var(--a2)">7</div><div class="sb-l">Mavzu</div></div>
+        <div class="sbox"><div class="sb-n" style="color:var(--a3)">30:00</div><div class="sb-l">Vaqt</div></div>
+        <div class="sbox"><div class="sb-n" style="color:var(--a4)">🔒</div><div class="sb-l">Himoya</div></div>
+      </div>
+
+      <div class="ttags">
+        <span class="tt" style="color:#e34c26;border-color:#e34c2635">📄 HTML</span>
+        <span class="tt" style="color:#4a6cf7;border-color:#4a6cf735">🎨 CSS</span>
+        <span class="tt" style="color:#c9a800;border-color:#c9a80035">⚡ JavaScript</span>
+        <span class="tt" style="color:#3572a5;border-color:#3572a535">🐍 Python</span>
+        <span class="tt" style="color:#7c6cf7;border-color:#7c6cf735">🤖 Botlar</span>
+        <span class="tt" style="color:#2496ed;border-color:#2496ed35">🐳 Docker</span>
+        <span class="tt" style="color:#4ec9b0;border-color:#4ec9b035">🔗 Klient-Server</span>
+      </div>
+
+      <div style="background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.25);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;text-align:left;font-size:.74rem;color:var(--a3);line-height:1.8">
+        ✍️ <strong>Yangi format:</strong> Har bir savolga <strong>o'z javobingizni matn ko'rinishida</strong> yozasiz.<br>
+        Javob aniq mos kelmasa ham — qisman to'g'ri javob uchun ham ball beriladi.<br>
+        ⏱ <strong>30 daqiqadan</strong> keyin test avtomatik tugaydi.
+      </div>
+
+      <button class="btn btn-p" id="startbtn" onclick="startQuiz()" style="font-size:.9rem;padding:.9rem 2.8rem">
+        Testni boshlash →
+      </button>
+      <div id="done-notice" style="display:none;margin-top:1rem;font-size:.72rem;color:var(--a4);padding:.55rem 1rem;background:rgba(231,76,60,.07);border:1px solid rgba(231,76,60,.22);border-radius:6px">
+        🔒 Test allaqachon o'tilgan. Qayta boshlash mumkin emas.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ QUIZ ══ -->
+  <div class="qscr" id="qs">
+    <div class="qhd">
+      <div class="qlbl">📚 To'liq test</div>
+      <div class="swbadge" id="swbadge">🔄 <span id="swcnt">0</span></div>
+      <div class="timer-wrap">
+        <div class="tmr-lbl">Qolgan vaqt</div>
+        <div class="tmr" id="tmr">30:00</div>
+      </div>
+    </div>
+    <div id="timer-bar-wrap2" style="display:block">
+      <div style="width:100%;height:6px;background:var(--br);border-radius:3px;margin-bottom:8px">
+        <div id="timer-bar2" style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ac),var(--a2));width:100%;transition:width .9s linear"></div>
+      </div>
+    </div>
+    <div class="pbar"><div class="pfill" id="pf"></div></div>
+    <div class="qctr" id="qctr"></div>
+    <!-- Dot progress -->
+    <div class="dot-row" id="dot-row"></div>
+    <div id="qa"></div>
+    <div class="nav">
+      <button class="btn btn-s" id="pb" onclick="prevQ()">← Oldingi</button>
+      <button class="btn btn-s" id="skipbtn" onclick="skipQ()">O'tkazib yuborish</button>
+      <button class="btn btn-p" id="nb" onclick="nextQ()">Keyingi →</button>
+    </div>
+  </div>
+
+  <!-- ══ RESULTS ══ -->
+  <div class="res" id="rs">
+    <div class="scc" id="scc">
+      <div class="sci">
+        <div class="sp" id="sp">0%</div>
+        <div class="sl">NATIJA</div>
+      </div>
+    </div>
+    <div class="rm" id="rm"></div>
+    <div class="rsub" id="rsub"></div>
+    <div class="rst">
+      <div><div class="stn" style="color:var(--a5)" id="rc">0</div><div class="std">To'g'ri</div></div>
+      <div><div class="stn" style="color:var(--a4)" id="rw">0</div><div class="std">Noto'g'ri</div></div>
+      <div><div class="stn" style="color:var(--mu)" id="rsk">0</div><div class="std">O'tkazildi</div></div>
+      <div><div class="stn" style="color:var(--ac)" id="rt">0:00</div><div class="std">Vaqt sarflandi</div></div>
+    </div>
+
+    <div class="swwarn" id="swwarn">⚠ Test davomida vkladka/oyna almashtirishlari qayd etildi</div>
+    <div class="timewarn" id="timewarn">⏰ Vaqt tugashi sababli test avtomatik yakunlandi</div>
+
+    <!-- Name input card -->
+    <div class="scard" id="namecard" style="margin-bottom:1.2rem;text-align:left;margin-top:1.5rem">
+      <div class="sc-ttl" style="font-size:.9rem;margin-bottom:1rem">📋 Natijalarni yuborish</div>
+      <div style="display:flex;flex-direction:column;gap:.7rem">
+        <div>
+          <label style="font-size:.68rem;color:var(--mu);display:block;margin-bottom:.3rem">ISM</label>
+          <input id="inp-ism" type="text" placeholder="Ismingizni kiriting..."
+                 style="width:100%;background:var(--sf);border:1px solid var(--br);border-radius:7px;
+                   padding:.7rem 1rem;color:var(--tx);font-family:inherit;font-size:.82rem;outline:none;-webkit-user-select:text;user-select:text"
+                 oninput="checkNameReady()" />
+        </div>
+        <div>
+          <label style="font-size:.68rem;color:var(--mu);display:block;margin-bottom:.3rem">FAMILIYA</label>
+          <input id="inp-fam" type="text" placeholder="Familiyangizni kiriting..."
+                 style="width:100%;background:var(--sf);border:1px solid var(--br);border-radius:7px;
+                   padding:.7rem 1rem;color:var(--tx);font-family:inherit;font-size:.82rem;outline:none;-webkit-user-select:text;user-select:text"
+                 oninput="checkNameReady()" />
+        </div>
+        <button id="sendbtn" class="btn btn-p" onclick="sendToTelegram()" disabled
+                style="width:100%;padding:.85rem;font-size:.85rem;margin-top:.3rem">
+          📤 Natijalarni Telegramga yuborish
+        </button>
+        <div id="sendstatus" style="font-size:.72rem;color:var(--a2);text-align:center;display:none"></div>
+      </div>
+    </div>
+
+    <div class="review-toggle" onclick="toggleReview()">📋 Javoblarni ko'rish <span id="rev-arrow">▼</span></div>
+    <div class="review-list" id="review-list"></div>
+    <br>
+    <button class="btn btn-p" onclick="goHome()">← Bosh sahifa</button>
+  </div>
+
+</div>
+
+<script>
+  // ════════════════════════════════════════════════════════
+  // 🔐 BOT TOKEN VA ADMIN ID (FAQAT SIZGA YUBORADI)
+  // ════════════════════════════════════════════════════════
+  const TG_TOKEN = '8542617782:AAGWOnjxB4s1eTCyhviN3bjZLP6Ot6mxLYw';   // SIZNING BOT TOKENINGIZ
+  const TG_ADMIN_ID = '5849062383';                                    // SIZNING TELEGRAM ID INGIZ
+
+  // ════════════════════════════════════════════════════════
+  // SHA-256
+  // ════════════════════════════════════════════════════════
+  async function sha256(msg){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // QUESTION BANK (30 questions)
+  // ════════════════════════════════════════════════════════
+  const BANK = [
+    { topic:'HTML', color:'#e34c26', icon:'📄', q: 'HTML5 da qaysi DOCTYPE ko\'rsatilishi kerak?', a_text: ['<!DOCTYPE html>', 'doctype html'], hint: 'Kichik yoki katta harf bo\'lishi mumkin', e: 'HTML5 da soddalashtirilgan DOCTYPE ishlatiladi: &lt;!DOCTYPE html&gt; — versiyasiz.' },
+    { topic:'HTML', color:'#e34c26', icon:'📄', q: 'Qaysi teg sahifaning semantik bo\'limini yaratadi? (HTML5)', a_text: ['section', '<section>', '<section'], hint: 'HTML5 ning semantik tegi', e: '&lt;section&gt; — HTML5 ning semantik tegi, mavzuviy bo\'limni bildiradi.' },
+    { topic:'HTML', color:'#e34c26', icon:'📄', q: '<code>&lt;img&gt;</code> tegining <code>alt</code> atributi nima uchun ishlatiladi?', a_text: ['muqobil matn', 'alternativ matn', 'alternative text', 'rasm yuklanmasa'], hint: 'Accessibility va SEO bilan bog\'liq', e: 'alt — rasm yuklanmasa ko\'rsatiladigan muqobil matn. Accessibility va SEO uchun muhim.' },
+    { topic:'HTML', color:'#e34c26', icon:'📄', q: 'Qaysi teg satr (inline) element EMAS — blok element?', a_text: ['p', '<p>', '<p>paragraf'], hint: 'Paragraf tegi', e: '&lt;p&gt; (paragraf) — blok element. &lt;span&gt;, &lt;a&gt;, &lt;strong&gt; — satr elementlar.' },
+    { topic:'HTML', color:'#e34c26', icon:'📄', q: '<code>&lt;script&gt;</code> tegidagi <code>defer</code> atributi nima qiladi?', a_text: ['html parse bolganidan keyin', 'html to\'liq parse', 'parse keyin ishlatiladi', 'kechiktiradi'], hint: 'Skript qachon ishlaydi?', e: 'defer — skript parallel yuklanadi, lekin HTML to\'liq parse bo\'lgandagina ishlaydi.' },
+    { topic:'CSS', color:'#4a6cf7', icon:'🎨', q: '<code>box-sizing: border-box</code> nimani anglatadi?', a_text: ['padding va borderni o\'z ichiga oladi', 'kenglik padding', 'border-box padding'], hint: 'O\'lchamni hisoblash usuli', e: 'border-box: kenglik va balandlik padding va borderni o\'z ichiga oladi.' },
+    { topic:'CSS', color:'#4a6cf7', icon:'🎨', q: 'Qaysi CSS selektori eng yuqori spetsifiklikka ega?', a_text: ['#id', 'id selektor', 'id selektori'], hint: 'Panjara belgisi bilan belgilanadi', e: 'ID-selektor (#id) — spetsifiklik 1-0-0, klass (0-1-0) yoki tegdan (0-0-1) yuqori.' },
+    { topic:'CSS', color:'#4a6cf7', icon:'🎨', q: 'Flexbox: asosiy o\'q bo\'ylab elementlarni qaysi xususiyat hizalaydi?', a_text: ['justify-content'], hint: 'justify- bilan boshlanadi', e: 'justify-content asosiy o\'q bo\'ylab (odatda gorizontal) hizalashni boshqaradi.' },
+    { topic:'CSS', color:'#4a6cf7', icon:'🎨', q: '<code>position: sticky</code> nima qiladi?', a_text: ['aylanganda chegaraga yopishadi', 'scroll chegara', 'relative va fixed gibridi'], hint: 'Scroll va qotish kombinatsiyasi', e: 'sticky — relative va fixed ning gibridi: scrollda belgilangan chegaragacha relative, keyin qotib qoladi.' },
+    { topic:'CSS', color:'#4a6cf7', icon:'🎨', q: 'CSS o\'zgaruvchisi qanday e\'lon qilinadi? (sintaksis)', a_text: ['--', '--color', 'ikki chiziqcha', '--o\'zgaruvchi'], hint: 'Ikki belgidan boshlanadi', e: 'CSS o\'zgaruvchilari ikki chiziqcha bilan e\'lon qilinadi: --color: red; va var(--color) orqali ishlatiladi.' },
+    { topic:'JavaScript', color:'#c9a800', icon:'⚡', q: 'JavaScript da <code>typeof null</code> nimaga teng?', a_text: ['object', '"object"'], hint: 'JS ning tarixiy xatosi', e: 'typeof null === "object" — JS ning tarixiy xatosi, orqaga moslik uchun saqlangan.' },
+    { topic:'JavaScript', color:'#c9a800', icon:'⚡', q: '<code>console.log(0.1 + 0.2 === 0.3)</code> natijasi qanday?', a_text: ['false'], hint: 'IEEE 754 suzuvchi nuqta', e: 'false — IEEE 754 sababli: 0.1 + 0.2 = 0.30000000000000004, bu 0.3 ga teng emas.' },
+    { topic:'JavaScript', color:'#c9a800', icon:'⚡', q: 'JS da closure (yopilish) nima?', a_text: ['tashqi o\'zgaruvchilarni eslaydigan', 'tashqi muhit eslab', 'closure tashqi'], hint: 'Funksiya va uning leksik muhiti', e: 'Closure — tashqi muhit tugagandan keyin ham tashqi o\'zgaruvchilarni eslab qoladigan funksiya.' },
+    { topic:'JavaScript', color:'#c9a800', icon:'⚡', q: '<code>Array.prototype.reduce()</code> nima qaytaradi?', a_text: ['bitta qiymat', 'jamlanma qiymat', 'akkumulyator', 'bitta jamlanma'], hint: 'Massivni qisqartiradi', e: 'reduce() massivni bitta qiymatga qisqartiradi, callbackni akkumulyatorga ketma-ket qo\'llaydi.' },
+    { topic:'JavaScript', color:'#c9a800', icon:'⚡', q: '<code>async/await</code> — bu nimaning sintaktik shakari?', a_text: ['promise', 'Promise'], hint: 'Asinxron operatsiyalar uchun', e: 'async/await — Promise uchun qulay sintaksis. async-funksiya har doim Promise qaytaradi.' },
+    { topic:'Python', color:'#3572a5', icon:'🐍', q: '<code>type([])</code> ifodasi qanday natija beradi?', a_text: ['list', '<class \'list\'>', 'class list'], hint: 'Kvadrat qavslar bilan yaratiladi', e: '[] list turidagi ob\'ekt yaratadi. type([]) &lt;class "list"&gt; qaytaradi.' },
+    { topic:'Python', color:'#3572a5', icon:'🐍', q: 'Funksiya imzosida <code>*args</code> nima anglatadi?', a_text: ['ixtiyoriy miqdordagi pozitsion', 'ko\'p pozitsion argument', 'istalgancha argument'], hint: 'Nechta argument bo\'lishi mumkin?', e: '*args ixtiyoriy miqdordagi pozitsion argumentlarni qabul qiladi — ular kortejga joylashadi.' },
+    { topic:'Python', color:'#3572a5', icon:'🐍', q: '<code>@staticmethod</code> dekoratori nima qiladi?', a_text: ['self va cls yo\'q', 'instansiyadan mustaqil', 'self olmaydi', 'klassdan mustaqil'], hint: 'self va cls haqida', e: '@staticmethod — self yoki cls ga kirish yo\'q. Klass tanasidagi oddiy funksiya.' },
+    { topic:'Python', color:'#3572a5', icon:'🐍', q: 'Python da "aniq yaxshiroq noaniqdan" tamoyili qaysi hujjat qismi?', a_text: ['Zen of Python', 'PEP 20', 'The Zen', 'zen'], hint: '"import this" buyrug\'i ko\'rsatadi', e: '"Explicit is better than implicit" — Python Zen (PEP 20) tamoyillaridan biri.' },
+    { topic:'Python', color:'#3572a5', icon:'🐍', q: '<code>__init__.py</code> fayli nima uchun ishlatiladi?', a_text: ['paket', 'python paket', 'katalogni paket', 'paketga aylantiradi'], hint: 'Katalog va modul tushunchalari', e: '__init__.py katalogni Python-paketga aylantiradi va undan modullarni import qilish imkonini beradi.' },
+    { topic:'Botlar', color:'#7c6cf7', icon:'🤖', q: 'Telegram Bot long polling rejimida yangilanishlarni qanday oladi?', a_text: ['getUpdates', 'timeout bilan getUpdates', 'getUpdates metodi'], hint: 'Metod nomi qanday?', e: 'Long polling: bot getUpdates chaqiradi va yangilanishlar kelguncha ulanishni ochiq ushlab turadi.' },
+    { topic:'Botlar', color:'#7c6cf7', icon:'🤖', q: 'Telegram Bot API da Webhook nima?', a_text: ['server manzili', 'url', 'telegram post yuboradi', 'server url'], hint: 'Telegram sizning serveringizga nima qiladi?', e: 'Webhook — serveringiz URL si. Telegram polling o\'rniga POST so\'rovlarni o\'zi yuboradi.' },
+    { topic:'Botlar', color:'#7c6cf7', icon:'🤖', q: 'python-telegram-bot: xabar ishlovchisini qaysi klass ro\'yxatga oladi?', a_text: ['MessageHandler', 'messagehandler'], hint: 'Message + Handler', e: 'MessageHandler(filters, callback) application.add_handler() orqali ro\'yxatga olinadi.' },
+    { topic:'Botlar', color:'#7c6cf7', icon:'🤖', q: 'InlineKeyboardMarkup nima?', a_text: ['xabarga biriktirilgan tugmalar', 'xabar ostidagi tugmalar', 'inline tugmalar'], hint: 'Xabar bilan biriktirilgan', e: 'InlineKeyboardMarkup — muayyan xabar ostidagi tugmalar.' },
+    { topic:'Botlar', color:'#7c6cf7', icon:'🤖', q: 'Telegram Bot API da matnli xabar yuboruvchi metod qaysi?', a_text: ['sendMessage', 'send_message'], hint: 'send + Message', e: 'sendMessage — matn yuborishning asosiy metodi. Majburiy parametrlar: chat_id va text.' },
+    { topic:'Docker', color:'#2496ed', icon:'🐳', q: 'Qaysi buyruq konteyner yaratib, uni darhol ishga tushiradi?', a_text: ['docker run', 'run'], hint: 'Yaratish + ishga tushirish bitta buyruq', e: 'docker run — rasmdan yangi konteyner yaratadi va ishga tushiradi.' },
+    { topic:'Docker', color:'#2496ed', icon:'🐳', q: 'Dockerfile nima?', a_text: ['rasm yig\'ish ko\'rsatmalari', 'image build', 'ko\'rsatmalar fayli'], hint: 'Rasmni qanday yaratish kerakligi', e: 'Dockerfile — Docker rasmini yig\'ish uchun ko\'rsatmalar to\'plami.' },
+    { topic:'Docker', color:'#2496ed', icon:'🐳', q: 'Dockerfile da asosiy rasmni qaysi ko\'rsatma belgilaydi?', a_text: ['FROM', 'from'], hint: 'Birinchi ko\'rsatma', e: 'FROM — har doim birinchi ko\'rsatma. Asosiy rasmni belgilaydi. Misol: FROM python:3.11-slim' },
+    { topic:'Docker', color:'#2496ed', icon:'🐳', q: 'docker-compose docker run dan qanday farq qiladi?', a_text: ['ko\'p konteyner', 'bog\'liq konteynerlar', 'bir buyruq ko\'p konteyner'], hint: 'Bir nechta servislarga tegishli', e: 'docker-compose docker-compose.yml o\'qiydi va ko\'p konteynerli ilovani bitta buyruq bilan boshqaradi.' },
+    { topic:'Docker', color:'#2496ed', icon:'🐳', q: 'Ishlaydigan konteynerlar ro\'yxatini qaysi buyruq ko\'rsatadi?', a_text: ['docker ps', 'ps'], hint: 'Qisqa, ikki harf', e: 'docker ps — ishlaydigan konteynerlar. docker ps -a — to\'xtatilganlar ham.' },
+    { topic:'Klient-Server', color:'#4ec9b0', icon:'🔗', q: 'Qaysi HTTP holati "resurs muvaffaqiyatli yaratildi" ni anglatadi?', a_text: ['201', '201 Created'], hint: '2xx guruhidan', e: '201 Created — resurs yaratgan muvaffaqiyatli POST ga javob.' },
+    { topic:'Klient-Server', color:'#4ec9b0', icon:'🔗', q: 'CORS nima? (qisqacha izohlang)', a_text: ['manbalar orasidagi kirish', 'cross origin', 'domenlar orasida', 'boshqa domendan so\'rov'], hint: 'Cross-Origin Resource Sharing', e: 'CORS — turli domenlardan so\'rovlarni nazorat qiluvchi brauzer xavfsizlik mexanizmi.' },
+    { topic:'Klient-Server', color:'#4ec9b0', icon:'🔗', q: 'GraphQL ning REST dan asosiy farqi nima?', a_text: ['bitta endpoint', 'bir endpoint', 'graphql bitta url', 'so\'rov tavsifi'], hint: 'URL soni haqida', e: 'GraphQL: bitta /graphql endpoint, klient kerakli strukturani tavsiflaydi.' },
+    { topic:'Klient-Server', color:'#4ec9b0', icon:'🔗', q: 'WebSocket HTTP dan qanday farq qiladi?', a_text: ['ikki tomonlama', 'full duplex', 'doimiy ulanish', 'to\'liq dupleks'], hint: 'Ulanish turi', e: 'WebSocket — to\'liq dupleks protokol. Handshake dan keyin ikkala tomon istalgan vaqtda ma\'lumot yuborishi mumkin.' },
+  ];
+
+  // ════════════════════════════════════════════════════════
+  // Answer matching
+  // ════════════════════════════════════════════════════════
+  function normalise(s){ return s.toLowerCase().replace(/[<>'";:,\.!\?]/g,'').replace(/\s+/g,' ').trim(); }
+  function scoreAnswer(userRaw, q){
+    if(!userRaw || userRaw.trim().length < 1) return 'skip';
+    const user = normalise(userRaw);
+    const answers = q.a_text.map(a => normalise(a));
+    for(const a of answers){ if(user === a || user.includes(a) || a.includes(user)) return 'correct'; }
+    const userWords = user.split(' ').filter(w => w.length > 2);
+    for(const a of answers){
+      const aWords = a.split(' ').filter(w => w.length > 2);
+      const common = userWords.filter(w => aWords.some(aw => aw.includes(w) || w.includes(aw)));
+      if(common.length >= 1 && userWords.length >= 1) return 'partial';
+    }
+    return 'wrong';
+  }
+
+  // ════════════════════════════════════════════════════════
+  // TELEGRAM SENDER (FAQAT ADMIN ID GA)
+  // ════════════════════════════════════════════════════════
+  async function sendToTelegram(){
+    const ism = document.getElementById('inp-ism').value.trim();
+    const fam = document.getElementById('inp-fam').value.trim();
+    if(!ism || !fam) return;
+    const btn = document.getElementById('sendbtn');
+    const statusDiv = document.getElementById('sendstatus');
+    btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...';
+    statusDiv.style.display = 'none';
+
+    const { qs, userTexts, scores, sw, t0 } = S;
+    const elapsed = Math.floor((Date.now() - t0) / 1000);
+    const ok  = scores.filter(s=>s==='correct').length;
+    const pt  = scores.filter(s=>s==='partial').length;
+    const tot = qs.length;
+    const pct = Math.round((ok + pt*0.5)/tot*100);
+    const mins = Math.floor(elapsed/60), secs = elapsed%60;
+    const timeStr = `${mins}:${String(secs).padStart(2,'0')}`;
+
+    let resultText = `🎓 *TEST NATIJALARI* (${ism} ${fam})\n📊 *Natija:* ${ok}/${tot} to'g'ri (${pct}%)\n⏱ *Vaqt:* ${timeStr}\n🔄 *Almashtirilgan soni:* ${sw}\n`;
+    if(FINAL_RESULTS && FINAL_RESULTS.timeout) resultText += `⏰ *Vaqt tugadi*\n`;
+    resultText += `\n*📝 Batafsil:*\n`;
+    for(let i=0; i<qs.length; i++){
+      const sc = scores[i];
+      const emoji = sc==='correct'?'✅':sc==='partial'?'🟡':sc==='skip'?'⏭':'❌';
+      const answer = userTexts[i] || '—';
+      resultText += `${emoji} *${i+1}.* ${qs[i].q.substring(0,60).replace(/<[^>]+>/g,'')}\n   Javob: ${answer.substring(0,50)}\n`;
+      if(sc !== 'correct') resultText += `   ✅ To'g'ri: ${qs[i].a_text[0]}\n`;
+    }
+
+    try {
+      const resp = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TG_ADMIN_ID, text: resultText, parse_mode: 'Markdown' })
+      });
+      const data = await resp.json();
+      if(data.ok){
+        statusDiv.style.color = '#2ecc71';
+        statusDiv.textContent = '✅ Natijalar muvaffaqiyatli yuborildi!';
+        statusDiv.style.display = 'block';
+        btn.textContent = '✅ Yuborildi';
+        console.log('✅ Hisobot jo\'natildi');
+      } else {
+        throw new Error(data.description);
+      }
+    } catch(e){
+      console.error('Xatolik:', e);
+      statusDiv.style.color = '#e74c3c';
+      statusDiv.textContent = `❌ Xatolik: ${e.message}. Internet aloqasini tekshiring va qayta urining.`;
+      statusDiv.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '📤 Qayta yuborish';
+      // Auto-retry after 3 seconds
+      setTimeout(() => { if(btn.disabled === false && btn.textContent.includes('Qayta')) sendToTelegram(); }, 3000);
+    }
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Core Logic (saqlangan)
+  // ════════════════════════════════════════════════════════
+  let S = { qs:[], cur:0, userTexts:[], scores:[], t0:null, ti:null, sw:0, timerInterval:null };
+  let HC = {};
+  let FINAL_RESULTS = null;
+  const TOTAL_SECONDS = 30 * 60;
+  function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]; } return a; }
+  async function buildHashes(qs){ HC = {}; for(let i=0;i<qs.length;i++) HC[i] = await sha256(qs[i].a_text[0]+'::'+i+'::'+qs[i].q.slice(0,20)); }
+  function screen(id){ document.getElementById('home').style.display = id==='home'?'block':'none'; document.getElementById('qs').style.display = id==='qs'?'block':'none'; document.getElementById('rs').style.display = id==='rs'?'block':'none'; }
+
+  let quizDone = false;
+  async function startQuiz(){
+    if(quizDone) return;
+    const shuffledQ = shuffle(BANK);
+    S = { qs: shuffledQ, cur: 0, userTexts: new Array(shuffledQ.length).fill(''), scores: new Array(shuffledQ.length).fill(null), t0: Date.now(), ti: null, timerInterval: null, sw: 0 };
+    FINAL_RESULTS = null;
+    await buildHashes(shuffledQ);
+    screen('qs');
+    startCountdown();
+    render();
+  }
+
+  function startCountdown(){
+    const tmrEl = document.getElementById('tmr'); const bar = document.getElementById('timer-bar2');
+    document.getElementById('timer-bar-wrap').style.display='block';
+    S.timerInterval = setInterval(()=>{
+      const elapsed = Math.floor((Date.now() - S.t0) / 1000);
+      const remaining = TOTAL_SECONDS - elapsed;
+      if(remaining <= 0){ clearInterval(S.timerInterval); tmrEl.textContent = '00:00'; tmrEl.className = 'tmr danger'; bar.style.width = '0%'; triggerTimeUp(); return; }
+      const mins = Math.floor(remaining/60), secs = remaining % 60;
+      tmrEl.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+      const pct = (remaining/TOTAL_SECONDS)*100; bar.style.width = pct+'%';
+      if(remaining <= 5*60){ tmrEl.className = 'tmr danger'; bar.style.background = 'var(--a4)'; }
+      else if(remaining <= 10*60){ tmrEl.className = 'tmr warn'; bar.style.background = 'linear-gradient(90deg,var(--a3),#ffcc44)'; }
+      else tmrEl.className = 'tmr';
+    }, 500);
+  }
+  function triggerTimeUp(){ saveCurrentInput(); for(let i=0;i<S.qs.length;i++) if(S.scores[i] === null){ const t = (S.userTexts[i]||'').trim(); S.scores[i] = t ? scoreAnswer(t, S.qs[i]) : 'skip'; }
+    document.getElementById('timeup-modal').classList.add('on'); setTimeout(()=>forceFinish(), 8000);
+  }
+  function forceFinish(){ document.getElementById('timeup-modal').classList.remove('on'); FINAL_RESULTS = { timeout: true }; showResults(); }
+  function saveCurrentInput(){ const ta = document.getElementById('ans-ta'); if(ta) S.userTexts[S.cur] = ta.value; }
+  function render(changed){
+    const { qs, cur, userTexts, scores } = S; const q = qs[cur], tot = qs.length;
+    const answered = scores.filter(s=>s!==null).length; document.getElementById('pf').style.width = (answered/tot*100)+'%'; document.getElementById('qctr').textContent = 'Savol '+(cur+1)+' / '+tot+' | Baholangan: '+answered;
+    const sb = document.getElementById('swbadge'); if(S.sw>0){ sb.classList.add('on'); document.getElementById('swcnt').textContent = '🔄 '+S.sw; } else sb.classList.remove('on');
+    const dotRow = document.getElementById('dot-row'); dotRow.innerHTML = qs.map((_,i)=>{ let cls='dot'; if(S.scores[i]==='correct') cls+=' ok'; else if(S.scores[i]==='wrong') cls+=' no'; else if(S.scores[i]==='partial') cls+=' ans'; else if(S.scores[i]==='skip') cls+=' ans'; else if(S.userTexts[i]) cls+=' ans'; if(i===cur) cls+=' cur'; return `<div class="${cls}" onclick="jumpTo(${i})" title="Savol ${i+1}"></div>`; }).join('');
+    const checked = scores[cur] !== null; const score = scores[cur]; const userTxt = userTexts[cur] || '';
+    let verdictHtml='', correctHtml='', expHtml='';
+    if(checked){ if(score==='correct') verdictHtml=`<div class="verdict ok on">✅ To'g'ri javob! Zo'r!</div>`;
+    else if(score==='partial') verdictHtml=`<div class="verdict pt on">🟡 Qisman to'g'ri. To'liq javobni ko'ring.</div>`;
+    else if(score==='skip') verdictHtml=`<div class="verdict no on">⏭ O'tkazib yuborildi.</div>`;
+    else verdictHtml=`<div class="verdict no on">❌ Noto'g'ri. To'g'ri javob:</div>`;
+      const correctAnsText = q.a_text[0];
+      correctHtml = score!=='correct' ? `<div class="correct-ans on">✔ To'g'ri: <strong>${correctAnsText}</strong></div>` : '';
+      expHtml = `<div class="exp on">💡 ${q.e}</div>`;
+    }
+    const inputState = checked ? 'disabled' : ''; const inputClass = checked ? (score==='correct'?'ans-input correct':score==='partial'?'ans-input partial':'ans-input wrong') : 'ans-input';
+    document.getElementById('qa').innerHTML = `<div class="qcard${changed?' changed':''}"><span class="tpill" style="color:${q.color};border-color:${q.color}35;background:${q.color}12">${q.icon} ${q.topic}</span><div class="qnum">SAVOL ${cur+1} · ${q.topic.toUpperCase()}</div><div class="qtxt">${q.q}</div><div class="answer-block"><div class="answer-label">✍️ Javobingiz <span>· ${q.hint}</span></div><textarea id="ans-ta" class="${inputClass}" rows="3" placeholder="Javobingizni bu yerga yozing..." ${inputState} oninput="updateCounter(this)">${userTxt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>${!checked ? `<div class="check-row"><button class="btn btn-p" onclick="doCheck()" id="check-btn" ${!userTxt.trim()?'disabled':''} style="font-size:.76rem;padding:.55rem 1.1rem">✓ Tekshirish</button><span class="char-counter" id="cc">${userTxt.length} belgi</span></div>` : ''}</div>${verdictHtml}${correctHtml}${expHtml}</div>`;
+    const ta = document.getElementById('ans-ta'); if(ta && !checked){ ta.focus(); ta.addEventListener('input', ()=>{ S.userTexts[S.cur] = ta.value; const cb = document.getElementById('check-btn'); if(cb) cb.disabled = !ta.value.trim(); const cc = document.getElementById('cc'); if(cc) cc.textContent = ta.value.length + ' belgi'; }); }
+    document.getElementById('pb').disabled = (cur===0); const nb = document.getElementById('nb'); const allChecked = S.scores.every(s=>s!==null);
+    if(cur===tot-1 && allChecked){ nb.textContent='Natijalar 📊'; nb.onclick=showResults; nb.disabled=false; } else { nb.textContent='Keyingi →'; nb.onclick=nextQ; nb.disabled=false; }
+    document.getElementById('skipbtn').style.display = checked ? 'none' : 'inline-block';
+  }
+  function updateCounter(el){ const cc = document.getElementById('cc'); if(cc) cc.textContent = el.value.length + ' belgi'; }
+  function doCheck(){ saveCurrentInput(); const txt = S.userTexts[S.cur]; if(!txt.trim()) S.scores[S.cur]='skip'; else S.scores[S.cur] = scoreAnswer(txt, S.qs[S.cur]); render(); }
+  function skipQ(){ saveCurrentInput(); S.scores[S.cur] = 'skip'; render(); if(S.cur < S.qs.length-1){ setTimeout(()=>{ S.cur++; render(); }, 400); } }
+  function nextQ(){ saveCurrentInput(); if(S.cur < S.qs.length-1){ S.cur++; render(); } }
+  function prevQ(){ saveCurrentInput(); if(S.cur > 0){ S.cur--; render(); } }
+  function jumpTo(i){ saveCurrentInput(); S.cur = i; render(); }
+  function showResults(){
+    clearInterval(S.timerInterval); document.getElementById('timer-bar-wrap').style.display='none';
+    const elapsed = Math.round((Date.now()-S.t0)/1000); const { qs, scores, userTexts, sw } = S;
+    const ok = scores.filter(s=>s==='correct').length, pt = scores.filter(s=>s==='partial').length, sk = scores.filter(s=>s==='skip'||s===null).length, tot = qs.length, pct = Math.round((ok + pt*0.5)/tot*100);
+    const mins = Math.floor(elapsed/60), secs = elapsed%60;
+    FINAL_RESULTS = { elapsed, ok, pt, tot, pct, timeout: FINAL_RESULTS?.timeout||false };
+    screen('rs');
+    document.getElementById('scc').style.setProperty('--p', pct); document.getElementById('sp').textContent = pct+'%';
+    document.getElementById('rc').textContent = ok + (pt>0?` (+${pt}🟡)`:''); document.getElementById('rw').textContent = tot-ok-pt-sk; document.getElementById('rsk').textContent = sk; document.getElementById('rt').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
+    if(sw>0) document.getElementById('swwarn').style.display='block'; if(FINAL_RESULTS.timeout) document.getElementById('timewarn').style.display='block';
+    quizDone=true; document.getElementById('startbtn').disabled=true; document.getElementById('startbtn').textContent='✅ Test o\'tildi'; document.getElementById('done-notice').style.display='block';
+    const msgs = [[90,'🏆 Ajoyib!','Zo\'r natija. Siz ustasiz!'],[70,'👍 Yaxshi!','Mustahkam bilim, biroz yetishmadi.'],[50,'📚 Yomon emas','Materialni takrorlash va qayta urinib ko\'rish kerak.'],[0,'💪 Davom eting','Mavzularni o\'rganing va yana urinib ko\'ring!']];
+    const [,ttl,sub] = msgs.find(([m])=>pct>=m); document.getElementById('rm').textContent = ttl; document.getElementById('rsub').textContent= sub;
+    const rl = document.getElementById('review-list'); rl.innerHTML = qs.map((q,i)=>{ const sc=scores[i]; const ut=userTexts[i]||''; const cls=sc==='correct'?'ok':sc==='partial'||sc==='wrong'?'no':'sk'; const emoji=sc==='correct'?'✅':sc==='partial'?'🟡':sc==='skip'||!sc?'⏭':'❌'; const qTxt=q.q.replace(/<[^>]+>/g,''); return `<div class="rev-item ${cls}"><div class="rev-q">${emoji} <strong>${i+1}.</strong> ${qTxt}</div>${ut?`<div class="rev-user">✍ Sizning javob: ${ut.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`:'<div class="rev-skip">Javob berilmadi</div>'}${sc!=='correct'?`<div class="rev-correct">✔ To'g'ri: ${q.a_text[0]}</div>`:''}</div>`; }).join('');
+  }
+  function toggleReview(){ const rl=document.getElementById('review-list'); const arr=document.getElementById('rev-arrow'); rl.classList.toggle('on'); arr.textContent=rl.classList.contains('on')?'▲':'▼'; }
+  function goHome(){ clearInterval(S.timerInterval); document.getElementById('timer-bar-wrap').style.display='none'; screen('home'); }
+  function swapCurrentQuestion(){ if(document.getElementById('qs').style.display!=='block') return; const {qs,cur,scores} = S; if(scores[cur]!==null) return; const candidates=[]; for(let i=0;i<qs.length;i++) if(i!==cur && scores[i]===null) candidates.push(i); if(candidates.length===0) return; const swapIdx=candidates[Math.floor(Math.random()*candidates.length)]; [qs[cur],qs[swapIdx]]=[qs[swapIdx],qs[cur]]; [S.userTexts[cur],S.userTexts[swapIdx]]=[S.userTexts[swapIdx],S.userTexts[cur]]; [S.scores[cur],S.scores[swapIdx]]=[S.scores[swapIdx],S.scores[cur]]; S.sw++; render(true); const t=document.getElementById('toast'); t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),3800); }
+  function checkNameReady(){ const ism = document.getElementById('inp-ism').value.trim(); const fam = document.getElementById('inp-fam').value.trim(); document.getElementById('sendbtn').disabled = !(ism && fam); }
+
+  // ════════════════════════════════════════════════════════
+  // PROTECTION
+  // ════════════════════════════════════════════════════════
+  (function(){
+    const ov=document.getElementById('ov'); const gm=document.getElementById('gm'); const gs=document.getElementById('gs'); let hideTimer=null, blurTs=0;
+    function showOv(title,sub,autohide){ gm.textContent=title||'Kirish bloklandi'; gs.textContent=sub||'Test oynasiga qayting'; ov.classList.add('on'); if(hideTimer) clearTimeout(hideTimer); if(autohide) hideTimer=setTimeout(()=>ov.classList.remove('on'),autohide); }
+    function hideOv(){ ov.classList.remove('on'); }
+    document.addEventListener('contextmenu',e=>e.preventDefault());
+    document.addEventListener('selectstart',e=>{ if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return; e.preventDefault(); });
+    document.addEventListener('dragstart',e=>e.preventDefault());
+    document.addEventListener('keydown',e=>{ if(e.key==='PrintScreen'){ e.preventDefault(); showOv('Screenshot bloklandi','Urinish qayd etildi',2800); swapCurrentQuestion(); return; } if(e.key==='F12'){ e.preventDefault(); return; } if(e.ctrlKey||e.metaKey){ const k=e.key.toLowerCase(); if(['a','s','p','u'].includes(k)){ e.preventDefault(); if(k==='p') showOv('Chop etish taqiqlandi','Bloklandi',2200); if(k==='u') showOv('Kodni ko\'rish taqiqlandi','Mavjud emas',2200); return; } if(e.shiftKey&&['i','j','c'].includes(k)){ e.preventDefault(); return; } } if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==='s'){ e.preventDefault(); showOv('Bloklandi','Qaychi asbob bloklandi',2800); swapCurrentQuestion(); } });
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden){ blurTs=Date.now(); showOv('Vkladka almashtirildi','Qaytganda joriy savol almashtiriladi'); } else { hideOv(); if(Date.now()-blurTs>150) swapCurrentQuestion(); } });
+    window.addEventListener('blur',()=>{ blurTs=Date.now(); showOv('Test oynasidan chiqdingiz','Qaytganda savol o\'zgaradi'); });
+    window.addEventListener('focus',()=>{ hideOv(); if(Date.now()-blurTs>150) swapCurrentQuestion(); });
+    let devWasOpen=false; setInterval(()=>{ const open=(window.outerWidth-window.innerWidth>160)||(window.outerHeight-window.innerHeight>160); if(open&&!devWasOpen){ devWasOpen=true; document.body.style.filter='blur(18px)'; showOv('DevTools aniqlandi','Yopilgunga qadar kontent yashirildi'); } else if(!open&&devWasOpen){ devWasOpen=false; document.body.style.filter=''; hideOv(); } },600);
+    const svgSrc=`<svg xmlns='http://www.w3.org/2000/svg' width='280' height='180'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='13' fill='rgba(124,108,247,0.055)' transform='rotate(-30 140 90)'>CodeQuiz · Himoyalangan</text></svg>`;
+    const wm=document.createElement('div'); wm.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9990;'; wm.style.backgroundImage=`url("data:image/svg+xml,${encodeURIComponent(svgSrc)}")`; wm.style.backgroundSize='280px 180px'; document.body.appendChild(wm);
+  })();
+</script>
+</body>
+</html>
